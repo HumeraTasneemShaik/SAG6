@@ -4,7 +4,7 @@ on:
   push:
     branches: [ master ]
   #pull_request:
-   # branches: [ master ]
+  #  branches: [ master ]
 
 env:
   # Path to the solution file relative to the root of the project.
@@ -19,6 +19,25 @@ permissions:
   contents: read
 
 jobs:
+  lint:
+    runs-on: windows-latest
+    
+    steps:
+    - name: RunLint
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: echo LINT
+      
+  test:
+    runs-on: windows-latest
+    needs: [build,lint]
+    
+    steps:
+    - name: Setup VSTest.exe
+      uses: Malcolmnixon/Setup-VSTest@v4
+    - name: RunTests
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: VSTest.Console.exe Debug\UnitTest1.dll
+
   build:
     runs-on: windows-latest
 
@@ -27,8 +46,11 @@ jobs:
 
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
-#removed
-   
+
+    - name: Restore NuGet packages
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: nuget restore ${{env.SOLUTION_FILE_PATH}}
+
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
